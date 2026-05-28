@@ -63,6 +63,8 @@ def pill(texto: str, tono: str = "") -> str:
     return f'<span class="{clase}">{texto}</span>'
 
 
+from dataclasses import replace
+
 def construir_parametros(
     precios: dict[str, float],
     pc_min: float,
@@ -72,23 +74,19 @@ def construir_parametros(
     sal_kg: float,
     masa_total: float,
 ) -> ParametrosLote:
-    insumos_editados = [
-        Insumo(
-            indice=base.indice,
-            nombre=base.nombre,
-            costo_kg=precios[base.nombre],
-            proteina_cruda=base.proteina_cruda,
-            energia_metabolizable=base.energia_metabolizable,
-        )
-        for base in CATALOGO_INSUMOS
-    ]
+    insumos_editados = []
+    for base in CATALOGO_INSUMOS:
+        cambios = {"costo_kg": precios[base.nombre]}
+        if base.nombre == "Maiz":
+            cambios["limite_max_pct"] = techo_nsc
+        insumos_editados.append(replace(base, **cambios))
+
     return ParametrosLote(
         masa_total_kg=masa_total,
         fosvimin_kg=fosvimin_kg,
         sal_kg=sal_kg,
         pc_minima_kg=pc_min,
         em_minima_mcal=em_min,
-        techo_nsc_porcentaje=techo_nsc,
         insumos=insumos_editados,
     )
 
