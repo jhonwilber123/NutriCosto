@@ -57,6 +57,14 @@ El motor resuelve el LP con dos metodos independientes:
 pip install -r requirements.txt
 ```
 
+## Despliegue en Render
+
+La aplicacion incluye los archivos necesarios para ser desplegada como **Web Service** en Render usando el entorno `Python 3`.
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `streamlit run app.py --server.port $PORT --server.address 0.0.0.0`
+
+> **Nota sobre base de datos:** El despliegue gratuito de Render utiliza almacenamiento efimero. Para mantener el historial de tandas, es recomendable usar un "Persistent Disk" o configurar una conexion a PostgreSQL en `nutricosto/db.py`.
+
 ## Uso
 
 ### Aplicacion interactiva (recomendada)
