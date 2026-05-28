@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Tanda #{{ detalle.cabecera.id }} · NutriCosto{% endblock %}
+
+{% block content %}
+{% set cab = detalle.cabecera %}
+
+<a href="/tandas" class="text-xs text-muted hover:text-coral transition mb-4 inline-flex items-center gap-1">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+    Volver al historico
+</a>
+
+<section class="mb-8">
+    <div class="text-coral nc-eyebrow mb-3">Tanda #{{ cab.id }} · {{ cab.fecha[:16].replace('T', ' ') }}</div>
+    <h1 class="text-4xl mb-2">{{ cab.codigo or 'Sin codigo' }}</h1>
+    {% if cab.notas %}<p class="text-muted">{{ cab.notas }}</p>{% endif %}
+</section>
+
+<div class="grid grid-cols-4 gap-4 mb-6">
+    <div class="bg-surface rounded-xl border border-border p-5">
+        <div class="text-muted nc-eyebrow mb-2">Z* (S/.)</div>
+        <div class="font-serif text-2xl nc-num">{{ '%.2f'|format(cab.costo_optimo) }}</div>
+    </div>
+    <div class="bg-surface rounded-xl border border-border p-5">
+        <div class="text-muted nc-eyebrow mb-2">Masa</div>
+        <div class="font-serif text-2xl nc-num">{{ '%.0f'|format(cab.masa_kg) }} kg</div>
+    </div>
+    <div class="bg-surface rounded-xl border border-border p-5">
+        <div class="text-muted nc-eyebrow mb-2">PC min</div>
+        <div class="font-serif text-2xl nc-num">{{ '%.1f'|format(cab.pc_min_kg) }} kg</div>
+    </div>
+    <div class="bg-surface rounded-xl border border-border p-5">
+        <div class="text-muted nc-eyebrow mb-2">EM min</div>
+        <div class="font-serif text-2xl nc-num">{{ '%.0f'|format(cab.em_min_mcal) }} Mcal</div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+    <div class="bg-surface rounded-xl border border-border overflow-hidden">
+        <div class="px-5 py-3 border-b border-border">
+            <h3 class="text-sm font-medium">Precios usados</h3>
+        </div>
+        <table class="w-full text-sm">
+            <tbody>
+                {% for p in detalle.precios %}
+                <tr class="border-t border-border first:border-t-0">
+                    <td class="px-5 py-2.5">{{ p.insumo }}</td>
+                    <td class="px-5 py-2.5 text-right nc-num">S/. {{ '%.2f'|format(p.costo_kg) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-surface rounded-xl border border-border overflow-hidden">
+        <div class="px-5 py-3 border-b border-border">
+            <h3 class="text-sm font-medium">Composicion resultante</h3>
+        </div>
+        <table class="w-full text-sm">
+            <thead class="bg-cream/60">
+                <tr class="text-left text-muted text-[0.7rem] uppercase tracking-wider">
+                    <th class="px-5 py-2 font-medium">Insumo</th>
+                    <th class="px-5 py-2 font-medium text-right">kg</th>
+                    <th class="px-5 py-2 font-medium text-right">S/. parcial</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in detalle.composicion %}
+                <tr class="border-t border-border {% if c.kg < 1e-6 %}opacity-50{% endif %}">
+                    <td class="px-5 py-2.5">{{ c.insumo }}</td>
+                    <td class="px-5 py-2.5 text-right nc-num">{{ '%.3f'|format(c.kg) }}</td>
+                    <td class="px-5 py-2.5 text-right nc-num">{{ '%.2f'|format(c.costo_parcial) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<form method="post" action="/tandas/{{ cab.id }}/delete"
+      onsubmit="return confirm('Eliminar la tanda #{{ cab.id }}? Esta accion no se puede deshacer.');">
+    <button type="submit"
+            class="text-xs text-muted hover:text-coral transition border border-border hover:border-coral px-4 py-2 rounded-md">
+        Eliminar tanda
+    </button>
+</form>
+{% endblock %}

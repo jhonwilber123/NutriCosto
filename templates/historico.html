@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Historico · NutriCosto{% endblock %}
+
+{% block content %}
+<section class="mb-10">
+    <div class="text-coral nc-eyebrow mb-3">Registro de produccion</div>
+    <h1 class="text-4xl mb-3">Historico de tandas</h1>
+    <p class="text-muted text-base max-w-3xl leading-relaxed">
+        Cada fila representa una optimizacion ejecutada y persistida en la base de
+        datos local SQLite. Incluye los precios usados, parametros nutricionales y
+        composicion resultante.
+    </p>
+</section>
+
+{% if not tandas %}
+<div class="bg-surface rounded-xl border border-border border-dashed p-12 text-center">
+    <div class="w-12 h-12 mx-auto mb-4 rounded-lg bg-subtle flex items-center justify-center text-coral">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </div>
+    <h3 class="text-lg mb-2">Sin tandas registradas</h3>
+    <p class="text-sm text-muted max-w-md mx-auto leading-relaxed mb-5">
+        Optimiza un lote y guardalo para empezar a construir el historico.
+    </p>
+    <a href="/" class="inline-block bg-coral hover:bg-coralhi text-white text-sm font-medium px-5 py-2 rounded-md transition">
+        Ir a Optimizar
+    </a>
+</div>
+{% else %}
+
+<div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="bg-surface rounded-xl border border-border p-5">
+        <div class="text-muted nc-eyebrow mb-2">Tandas registradas</div>
+        <div class="font-serif text-3xl nc-num">{{ tandas|length }}</div>
+    </div>
+    <div class="bg-surface rounded-xl border border-border p-5">
+        <div class="text-muted nc-eyebrow mb-2">Z* promedio</div>
+        {% set total = tandas|sum(attribute='costo_optimo') %}
+        <div class="font-serif text-3xl nc-num">S/. {{ '%.2f'|format(total / tandas|length) }}</div>
+    </div>
+    <div class="bg-surface rounded-xl border border-border p-5">
+        <div class="text-muted nc-eyebrow mb-2">Ultima tanda</div>
+        <div class="font-serif text-3xl nc-num">S/. {{ '%.2f'|format(tandas[0].costo_optimo) }}</div>
+    </div>
+</div>
+
+<div class="bg-surface rounded-xl border border-border overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-cream/60">
+            <tr class="text-left text-muted text-[0.72rem] uppercase tracking-wider">
+                <th class="px-5 py-3 font-medium">ID</th>
+                <th class="px-5 py-3 font-medium">Fecha</th>
+                <th class="px-5 py-3 font-medium">Codigo</th>
+                <th class="px-5 py-3 font-medium text-right">Masa</th>
+                <th class="px-5 py-3 font-medium text-right">PC min</th>
+                <th class="px-5 py-3 font-medium text-right">EM min</th>
+                <th class="px-5 py-3 font-medium">Estado</th>
+                <th class="px-5 py-3 font-medium text-right">Z* (S/.)</th>
+                <th class="px-5 py-3 font-medium text-right">Detalle</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in tandas %}
+            <tr class="border-t border-border hover:bg-cream/40 transition">
+                <td class="px-5 py-3 nc-num text-muted">#{{ t.id }}</td>
+                <td class="px-5 py-3 nc-num text-xs">{{ t.fecha[:16].replace('T', ' ') }}</td>
+                <td class="px-5 py-3">{{ t.codigo or '—' }}</td>
+                <td class="px-5 py-3 text-right nc-num">{{ '%.0f'|format(t.masa_kg) }}</td>
+                <td class="px-5 py-3 text-right nc-num">{{ '%.1f'|format(t.pc_min_kg) }}</td>
+                <td class="px-5 py-3 text-right nc-num">{{ '%.0f'|format(t.em_min_mcal) }}</td>
+                <td class="px-5 py-3">
+                    {% if t.estado_solver == 'Optimal' %}
+                    <span class="inline-flex items-center gap-1 text-[0.7rem] text-olive font-medium">
+                        <span class="w-1.5 h-1.5 rounded-full bg-olive"></span> Optimo
+                    </span>
+                    {% else %}
+                    <span class="text-[0.7rem] text-coral">{{ t.estado_solver }}</span>
+                    {% endif %}
+                </td>
+                <td class="px-5 py-3 text-right nc-num font-medium">{{ '%.2f'|format(t.costo_optimo) }}</td>
+                <td class="px-5 py-3 text-right">
+                    <a href="/tandas/{{ t.id }}" class="text-coral hover:text-coralhi text-xs font-medium">Ver →</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

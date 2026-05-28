@@ -1,0 +1,12 @@
+<div class="bg-ink text-cream px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 nc-fade-in"
+     x-data="{ show: true }"
+     x-show="show"
+     x-init="setTimeout(() => show = false, 3500)">
+    <div class="w-7 h-7 rounded-full bg-olive flex items-center justify-center">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <div class="text-sm">
+        <div class="font-medium">Tanda #{{ tanda_id }} registrada</div>
+        <a href="/tandas" class="text-[0.72rem] text-cream/70 hover:text-coral transition">Ver en historico →</a>
+    </div>
+</div>

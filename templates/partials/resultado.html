@@ -1,0 +1,240 @@
+<div class="nc-fade-in space-y-6">
+
+    {% set ok_delta = delta_ip < 1e-4 %}
+    <div class="flex items-center gap-2 mb-2">
+        {% if solucion.estado == 'Optimal' %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.7rem] font-semibold bg-olive/10 text-olive border border-olive/30">
+            <span class="w-1.5 h-1.5 rounded-full bg-olive"></span> OPTIMO
+        </span>
+        {% else %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.7rem] font-semibold bg-coral/10 text-coral border border-coral/30">
+            {{ solucion.estado }}
+        </span>
+        {% endif %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.7rem] font-medium {% if ok_delta %}bg-subtle text-muted border border-border{% else %}bg-coral/10 text-coralhi border border-coral/30{% endif %}">
+            Verificacion Simplex/IP: <span class="nc-num">Δ {{ '%.2e'|format(delta_ip) }}</span>
+        </span>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4">
+        <div class="bg-surface rounded-xl border border-border p-5">
+            <div class="text-muted nc-eyebrow mb-2">Costo optimo Z*</div>
+            <div class="font-serif text-3xl nc-num">S/. {{ '%.2f'|format(solucion.costo_total) }}</div>
+            <div class="text-xs text-muted mt-1">por lote de {{ '%.0f'|format(solucion.masa_total_kg) }} kg</div>
+        </div>
+        <div class="bg-surface rounded-xl border border-border p-5">
+            <div class="text-muted nc-eyebrow mb-2">Proteina cruda</div>
+            <div class="font-serif text-3xl nc-num">{{ '%.2f'|format(solucion.proteina_cruda_kg) }}</div>
+            <div class="text-xs text-muted mt-1">kg totales en el lote</div>
+        </div>
+        <div class="bg-surface rounded-xl border border-border p-5">
+            <div class="text-muted nc-eyebrow mb-2">Energia metabolizable</div>
+            <div class="font-serif text-3xl nc-num">{{ '%.1f'|format(solucion.energia_metabolizable_mcal) }}</div>
+            <div class="text-xs text-muted mt-1">Mcal totales</div>
+        </div>
+    </div>
+
+    {% set ca_p_ratio = (solucion.calcio_kg / solucion.fosforo_kg) if solucion.fosforo_kg > 1e-9 else 0 %}
+    <div class="grid grid-cols-4 gap-3">
+        <div class="bg-cream/40 rounded-lg border border-border p-3">
+            <div class="text-[0.62rem] text-muted uppercase tracking-wider mb-1">Fibra cruda</div>
+            <div class="font-serif text-lg nc-num">{{ '%.2f'|format(solucion.fibra_cruda_kg) }} <span class="text-xs text-muted">kg</span></div>
+        </div>
+        <div class="bg-cream/40 rounded-lg border border-border p-3">
+            <div class="text-[0.62rem] text-muted uppercase tracking-wider mb-1">Calcio</div>
+            <div class="font-serif text-lg nc-num">{{ '%.3f'|format(solucion.calcio_kg) }} <span class="text-xs text-muted">kg</span></div>
+        </div>
+        <div class="bg-cream/40 rounded-lg border border-border p-3">
+            <div class="text-[0.62rem] text-muted uppercase tracking-wider mb-1">Fosforo</div>
+            <div class="font-serif text-lg nc-num">{{ '%.3f'|format(solucion.fosforo_kg) }} <span class="text-xs text-muted">kg</span></div>
+        </div>
+        <div class="bg-cream/40 rounded-lg border border-border p-3">
+            <div class="text-[0.62rem] text-muted uppercase tracking-wider mb-1">Ratio Ca:P</div>
+            <div class="font-serif text-lg nc-num">{{ '%.2f'|format(ca_p_ratio) }} : 1</div>
+        </div>
+    </div>
+
+    <div class="bg-surface rounded-xl border border-border overflow-hidden">
+        <div class="px-5 py-4 border-b border-border flex items-center justify-between">
+            <h3 class="text-base">Composicion del lote</h3>
+            <span class="text-xs text-muted">7 insumos</span>
+        </div>
+        <table class="w-full text-sm">
+            <thead class="bg-cream/60">
+                <tr class="text-left text-muted text-[0.72rem] uppercase tracking-wider">
+                    <th class="px-5 py-3 font-medium">Insumo</th>
+                    <th class="px-5 py-3 font-medium text-right">kg</th>
+                    <th class="px-5 py-3 font-medium">%</th>
+                    <th class="px-5 py-3 font-medium text-right">Parcial S/.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in composicion %}
+                <tr class="border-t border-border {% if c.kg < 1e-6 %}opacity-50{% endif %}">
+                    <td class="px-5 py-3">
+                        <span class="font-mono text-[0.72rem] text-coral mr-2">x{{ c.indice }}</span>
+                        <span class="font-medium">{{ c.nombre }}</span>
+                    </td>
+                    <td class="px-5 py-3 text-right nc-num font-medium">{{ '%.3f'|format(c.kg) }}</td>
+                    <td class="px-5 py-3 w-[180px]">
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 h-1.5 bg-subtle rounded-full overflow-hidden">
+                                <div class="h-full bg-coral rounded-full" style="width: {{ (c.kg / max_kg * 100) if max_kg else 0 }}%"></div>
+                            </div>
+                            <span class="nc-num text-xs text-muted w-12 text-right">{{ '%.1f'|format(c.pct) }}%</span>
+                        </div>
+                    </td>
+                    <td class="px-5 py-3 text-right nc-num">{{ '%.2f'|format(c.parcial) }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="border-t border-border bg-cream/40 font-medium">
+                    <td class="px-5 py-3">Total</td>
+                    <td class="px-5 py-3 text-right nc-num">{{ '%.2f'|format(solucion.masa_total_kg) }}</td>
+                    <td class="px-5 py-3 text-muted">100.0%</td>
+                    <td class="px-5 py-3 text-right nc-num text-coral">{{ '%.2f'|format(solucion.costo_total) }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <details class="bg-surface rounded-xl border border-border overflow-hidden group">
+        <summary class="px-5 py-4 cursor-pointer flex items-center justify-between text-sm font-medium select-none">
+            <span>Analisis de sensibilidad · precios sombra</span>
+            <svg class="transition-transform group-open:rotate-180 text-muted" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <table class="w-full text-sm border-t border-border">
+            <thead class="bg-cream/60">
+                <tr class="text-left text-muted text-[0.72rem] uppercase tracking-wider">
+                    <th class="px-5 py-3 font-medium">Restriccion</th>
+                    <th class="px-5 py-3 font-medium text-right">Holgura</th>
+                    <th class="px-5 py-3 font-medium text-right">Precio sombra</th>
+                    <th class="px-5 py-3 font-medium">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sensibilidad %}
+                <tr class="border-t border-border">
+                    <td class="px-5 py-2.5 text-muted">{{ s.nombre }}</td>
+                    <td class="px-5 py-2.5 text-right nc-num">{{ '%.4f'|format(s.holgura) }}</td>
+                    <td class="px-5 py-2.5 text-right nc-num {% if s.dual > 0 %}text-coral{% elif s.dual < 0 %}text-olive{% endif %}">
+                        {{ '%.4f'|format(s.dual) }}
+                    </td>
+                    <td class="px-5 py-2.5">
+                        {% if s.activa %}
+                        <span class="text-[0.7rem] font-semibold text-coral">ACTIVA</span>
+                        {% else %}
+                        <span class="text-[0.7rem] text-muted">holgura</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p class="px-5 py-3 text-xs text-muted bg-cream/40 border-t border-border">
+            Una restriccion activa marca el cuello de botella. El precio sombra indica el cambio en Z* por relajar 1 unidad la restriccion.
+        </p>
+    </details>
+
+    <div class="bg-surface rounded-xl border border-border overflow-hidden">
+        <div class="px-5 py-4 border-b border-border flex items-center justify-between">
+            <div>
+                <h3 class="text-base">Plan de compra fisico</h3>
+                <p class="text-xs text-muted mt-0.5">
+                    Para producir <strong class="text-ink nc-num">{{ plan.lotes }}</strong>
+                    {% if plan.lotes == 1 %}lote{% else %}lotes{% endif %}
+                    de {{ '%.0f'|format(plan.masa_lote_kg) }} kg
+                    (<span class="nc-num">{{ '%.0f'|format(plan.masa_total_kg) }} kg</span> totales)
+                </p>
+            </div>
+            <div class="text-right">
+                <div class="text-[0.7rem] text-muted uppercase tracking-wider">Costo real al comprar sacos</div>
+                <div class="font-serif text-2xl nc-num text-coral">S/. {{ '%.2f'|format(plan.costo_real_total) }}</div>
+            </div>
+        </div>
+
+        <table class="w-full text-sm">
+            <thead class="bg-cream/60">
+                <tr class="text-left text-muted text-[0.7rem] uppercase tracking-wider">
+                    <th class="px-5 py-3 font-medium">Insumo</th>
+                    <th class="px-5 py-3 font-medium text-right">kg requeridos</th>
+                    <th class="px-5 py-3 font-medium text-right">kg / saco</th>
+                    <th class="px-5 py-3 font-medium text-right">Sacos a comprar</th>
+                    <th class="px-5 py-3 font-medium text-right">Sobrante kg</th>
+                    <th class="px-5 py-3 font-medium text-right">S/. / saco</th>
+                    <th class="px-5 py-3 font-medium text-right">Costo real</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in plan.filas %}
+                <tr class="border-t border-border {% if f.sacos_a_comprar == 0 and f.kg_requeridos < 1e-6 %}opacity-50{% endif %}">
+                    <td class="px-5 py-3">
+                        <span class="font-mono text-[0.72rem] text-coral mr-2">x{{ f.indice }}</span>
+                        <span class="font-medium">{{ f.nombre }}</span>
+                    </td>
+                    <td class="px-5 py-3 text-right nc-num">{{ '%.3f'|format(f.kg_requeridos) }}</td>
+                    <td class="px-5 py-3 text-right nc-num text-muted">{{ '%.0f'|format(f.kg_por_saco) }}</td>
+                    <td class="px-5 py-3 text-right">
+                        {% if f.sacos_a_comprar > 0 %}
+                        <span class="inline-flex items-center justify-center min-w-[2rem] h-7 px-2 rounded-full bg-coral/10 text-coral font-bold nc-num text-sm border border-coral/30">
+                            {{ f.sacos_a_comprar }}
+                        </span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-3 text-right nc-num text-[0.78rem] {% if f.sobrante_kg > 0.01 %}text-coralhi{% else %}text-muted{% endif %}">
+                        {% if f.sobrante_kg > 0.001 %}+{{ '%.2f'|format(f.sobrante_kg) }}{% else %}—{% endif %}
+                    </td>
+                    <td class="px-5 py-3 text-right nc-num text-muted">{{ '%.2f'|format(f.precio_saco) }}</td>
+                    <td class="px-5 py-3 text-right nc-num font-medium">{{ '%.2f'|format(f.costo_real) }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="border-t border-border bg-cream/40 font-medium">
+                    <td class="px-5 py-3" colspan="3">Total</td>
+                    <td class="px-5 py-3 text-right nc-num">
+                        {{ plan.filas|sum(attribute='sacos_a_comprar') }} sacos
+                    </td>
+                    <td class="px-5 py-3 text-right nc-num text-coralhi text-[0.78rem]">
+                        +{{ '%.2f'|format(plan.filas|sum(attribute='sobrante_kg')) }} kg
+                    </td>
+                    <td class="px-5 py-3 text-right text-muted text-xs">Real</td>
+                    <td class="px-5 py-3 text-right nc-num text-coral">{{ '%.2f'|format(plan.costo_real_total) }}</td>
+                </tr>
+                <tr class="border-t border-border text-xs">
+                    <td class="px-5 py-2.5 text-muted" colspan="6">
+                        Costo teorico continuo (kg × S/./kg) · sin redondeo a sacos
+                    </td>
+                    <td class="px-5 py-2.5 text-right nc-num text-muted">{{ '%.2f'|format(plan.costo_teorico_total) }}</td>
+                </tr>
+                <tr class="border-t border-border text-xs bg-cream/40">
+                    <td class="px-5 py-2.5 text-muted" colspan="6">
+                        Sobrecosto por discretizacion (sacos enteros)
+                    </td>
+                    <td class="px-5 py-2.5 text-right nc-num {% if plan.sobre_costo > 0.01 %}text-coralhi{% else %}text-olive{% endif %}">
+                        {% if plan.sobre_costo > 0.001 %}+{% endif %}{{ '%.2f'|format(plan.sobre_costo) }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-surface rounded-xl border border-border p-6">
+        <h3 class="text-base nc-divider pl-0 mb-4">Registrar esta tanda</h3>
+        <form hx-post="/tandas" hx-target="#toast-zone" hx-swap="beforeend" class="grid grid-cols-1 md:grid-cols-[200px_1fr_auto] gap-3 items-end">
+            <label class="flex flex-col gap-1">
+                <span class="text-[0.72rem] text-muted">Codigo</span>
+                <input type="text" name="codigo" placeholder="LOT-2026-001"
+                       class="px-3 py-2 rounded-md border border-border bg-cream text-sm">
+            </label>
+            <label class="flex flex-col gap-1">
+                <span class="text-[0.72rem] text-muted">Notas</span>
+                <input type="text" name="notas" placeholder="Observaciones..."
+                       class="px-3 py-2 rounded-md border border-border bg-cream text-sm">
+            </label>
+            <button type="submit"
+                    class="bg-ink hover:bg-black text-white text-sm font-medium px-5 py-2.5 rounded-md transition">
+                Guardar tanda
+            </button>
+        </form>
+    </div>
+</div>

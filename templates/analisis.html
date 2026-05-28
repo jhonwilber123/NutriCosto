@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Analisis · NutriCosto{% endblock %}
+
+{% block content %}
+<section class="mb-10">
+    <div class="text-coral nc-eyebrow mb-3">Inteligencia operativa</div>
+    <h1 class="text-4xl mb-3">Evolucion del costo optimo</h1>
+    <p class="text-muted text-base max-w-3xl leading-relaxed">
+        Serie temporal de Z* por tanda. Las subidas reflejan presiones de mercado en
+        insumos clave; las bajadas, condiciones favorables o renegociacion con proveedores.
+    </p>
+</section>
+
+{% if not tandas %}
+<div class="bg-surface rounded-xl border border-border border-dashed p-12 text-center">
+    <h3 class="text-lg mb-2">Sin datos suficientes</h3>
+    <p class="text-sm text-muted">Necesitas al menos una tanda registrada.</p>
+</div>
+{% else %}
+{% set total = tandas|sum(attribute='costo_optimo') %}
+{% set prom = total / tandas|length %}
+<div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="bg-surface rounded-xl border border-border p-5">
+        <div class="text-muted nc-eyebrow mb-2">Tandas</div>
+        <div class="font-serif text-3xl nc-num">{{ tandas|length }}</div>
+    </div>
+    <div class="bg-surface rounded-xl border border-border p-5">
+        <div class="text-muted nc-eyebrow mb-2">Z* promedio</div>
+        <div class="font-serif text-3xl nc-num">S/. {{ '%.2f'|format(prom) }}</div>
+    </div>
+    <div class="bg-surface rounded-xl border border-border p-5">
+        <div class="text-muted nc-eyebrow mb-2">Rango</div>
+        {% set minv = tandas|map(attribute='costo_optimo')|min %}
+        {% set maxv = tandas|map(attribute='costo_optimo')|max %}
+        <div class="font-serif text-xl nc-num">S/. {{ '%.2f'|format(minv) }} — {{ '%.2f'|format(maxv) }}</div>
+    </div>
+</div>
+
+<div class="bg-surface rounded-xl border border-border p-6">
+    <h3 class="text-base nc-divider pl-0 mb-4">Serie temporal de Z*</h3>
+    <canvas id="chart-costos" height="120"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    fetch('/api/tandas.json')
+        .then(r => r.json())
+        .then(data => {
+            const ctx = document.getElementById('chart-costos').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => '#' + d.id + (d.codigo ? ' · ' + d.codigo : '')),
+                    datasets: [{
+                        label: 'Z* (S/.)',
+                        data: data.map(d => d.costo),
+                        borderColor: '#C96442',
+                        backgroundColor: 'rgba(201,100,66,0.12)',
+                        borderWidth: 2,
+                        tension: 0.25,
+                        pointBackgroundColor: '#C96442',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1F1E1B',
+                            titleColor: '#FAF9F5',
+                            bodyColor: '#FAF9F5',
+                            padding: 10,
+                            borderColor: '#E5E0D5',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: (c) => 'Z* = S/. ' + c.parsed.y.toFixed(2),
+                            }
+                        },
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(229,224,213,0.5)' },
+                            ticks: { color: '#6B6862', font: { family: 'Inter', size: 11 } },
+                        },
+                        y: {
+                            grid: { color: 'rgba(229,224,213,0.5)' },
+                            ticks: {
+                                color: '#6B6862',
+                                font: { family: 'JetBrains Mono', size: 11 },
+                                callback: (v) => 'S/. ' + v.toFixed(0),
+                            },
+                        },
+                    },
+                },
+            });
+        });
+</script>
+{% endif %}
+{% endblock %}
